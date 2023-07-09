@@ -1,3 +1,7 @@
+# Execution Commands
+```
+gcloud auth login
+
 gcloud compute instances create testvm --zone=us-east1-b \
 --machine-type=n1-highmem-8 \
 --image=centos-7-v20210817 \
@@ -22,3 +26,4 @@ $ gcloud compute instances describe testvm --zone=us-east1-b --format="json(meta
     "kind": "compute#metadata"
   }
 }
+```
