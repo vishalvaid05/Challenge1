@@ -48,35 +48,6 @@ resource "google_compute_network" "main" {
   project                 = var.project_id
 }
 
-resource "google_compute_global_address" "main" {
-  name          = "${var.deployment_name}-vpc-address"
-  provider      = google-beta
-  purpose       = "VPC_PEERING"
-  address_type  = "INTERNAL"
-  prefix_length = 16
-  network       = google_compute_network.main.name
-  project       = var.project_id
-}
-
-resource "google_service_networking_connection" "main" {
-  network                 = google_compute_network.main.self_link
-  service                 = "servicenetworking.googleapis.com"
-  reserved_peering_ranges = [google_compute_global_address.main.name]
-
-}
-
-resource "google_vpc_access_connector" "main" {
-  provider       = google-beta
-  project        = var.project_id
-  name           = "${var.deployment_name}-vpc-cx"
-  ip_cidr_range  = "10.8.0.0/28"
-  network        = google_compute_network.main.name
-  region         = var.region
-  max_throughput = 300
-}
-
-# Looked at using the module, but there doesn't seem to be a huge win there.
-# Handle redis instance
 resource "google_redis_instance" "main" {
   authorized_network      = google_compute_network.main.name
   connect_mode            = "DIRECT_PEERING"
@@ -93,11 +64,6 @@ resource "google_redis_instance" "main" {
   labels                  = var.labels
 }
 
-resource "random_id" "id" {
-  byte_length = 2
-}
-
-# Handle Database
 resource "google_sql_database_instance" "main" {
   name             = "${var.deployment_name}-db-${random_id.id.hex}"
   database_version = "POSTGRES_14"
@@ -236,18 +202,3 @@ resource "google_cloud_run_service" "fe" {
   }
 }
 
-resource "google_cloud_run_service_iam_member" "noauth_api" {
-  location = google_cloud_run_service.api.location
-  project  = google_cloud_run_service.api.project
-  service  = google_cloud_run_service.api.name
-  role     = "roles/run.invoker"
-  member   = "allUsers"
-}
-
-resource "google_cloud_run_service_iam_member" "noauth_fe" {
-  location = google_cloud_run_service.fe.location
-  project  = google_cloud_run_service.fe.project
-  service  = google_cloud_run_service.fe.name
-  role     = "roles/run.invoker"
-  member   = "allUsers"
-}
