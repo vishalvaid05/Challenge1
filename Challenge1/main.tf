@@ -18,7 +18,6 @@ module "project-factory_project_services" {
     "compute.googleapis.com",
     "cloudapis.googleapis.com",
     "vpcaccess.googleapis.com",
-    "servicenetworking.googleapis.com",
     "cloudbuild.googleapis.com",
     "sql-component.googleapis.com",
     "sqladmin.googleapis.com",
@@ -90,10 +89,6 @@ resource "google_sql_database_instance" "main" {
     }
   }
   deletion_protection = false
-
-  depends_on = [
-    google_service_networking_connection.main
-  ]
 }
 
 
@@ -150,26 +145,7 @@ resource "google_cloud_run_service" "api" {
 
       }
     }
-
-    metadata {
-      annotations = {
-        "autoscaling.knative.dev/maxScale"        = "8"
-        "run.googleapis.com/cloudsql-instances"   = google_sql_database_instance.main.connection_name
-        "run.googleapis.com/client-name"          = "terraform"
-        "run.googleapis.com/vpc-access-egress"    = "all"
-        "run.googleapis.com/vpc-access-connector" = google_vpc_access_connector.main.id
-
-      }
-    }
   }
-  metadata {
-    labels = var.labels
-  }
-  autogenerate_revision_name = true
-  depends_on = [
-    google_sql_user.main,
-    google_sql_database.database
-  ]
 }
 
 resource "google_cloud_run_service" "fe" {
@@ -191,12 +167,7 @@ resource "google_cloud_run_service" "fe" {
         }
       }
     }
-    metadata {
-      annotations = {
-        "autoscaling.knative.dev/maxScale" = "8"
       }
-    }
-  }
   metadata {
     labels = var.labels
   }
